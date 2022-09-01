@@ -1,0 +1,48 @@
+version: "3.8"
+services:
+  influxdb:
+    image: influxdb:latest
+    ports:
+      - "8086:8086"
+    environment:
+      - INFLUXD_HTTP_BIND_ADDRESS=:8086
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=password
+      - DOCKER_INFLUXDB_INIT_ORG=org
+      - DOCKER_INFLUXDB_INIT_BUCKET=iot_center
+      - DOCKER_INFLUXDB_INIT_RETENTION=30d
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=admin-token
+
+    command: influxd --reporting-disabled
+
+  mosquitto:
+    image: eclipse-mosquitto:2.0.10
+    ports:
+      - "1883:1883"
+    volumes:
+      - $PWD/mosquitto:/mosquitto
+
+  telegraf:
+    image: telegraf:latest
+    depends_on:
+      - influxdb
+    volumes:
+      - $PWD/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
+
+  iot_center:
+    image: ghcr.io/bonitoo-io/iot-center-v2/iot-center:nightly
+    ports:
+      - "8080:5000"
+    environment:
+      - INFLUX_URL=http://influxdb:8086
+      - INFLUX_TOKEN=admin-token
+      - INFLUX_ORG=org
+      - MQTT_TOPIC=iot_center
+      - MQTT_URL=mqtt://mosquitto:1883
+    depends_on:
+      - mosquitto
+      - influxdb
+      - telegraf
+    volumes:
+      - $PWD/iot_center/config/data:/usr/src/data

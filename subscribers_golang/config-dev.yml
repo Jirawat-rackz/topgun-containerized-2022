@@ -1,0 +1,15 @@
+influxdb:
+  username: admin
+  password: password
+  token: admin-token
+  url: http://localhost:8086
+  organization: org
+  bucket: iot_center
+
+mosquitto:
+  host: localhost
+  port: 1883
+  username: admin
+  password: password
+  topic: iot_center
+  clientid: robot_mac
